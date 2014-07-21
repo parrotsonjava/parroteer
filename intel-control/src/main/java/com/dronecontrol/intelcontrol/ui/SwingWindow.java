@@ -1,6 +1,20 @@
 package com.dronecontrol.intelcontrol.ui;
 
-import com.google.common.collect.Maps;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Desktop;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.net.URI;
+import java.util.Map;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+
 import com.dronecontrol.perceptual.data.body.Coordinate;
 import com.dronecontrol.perceptual.data.body.Hands;
 import com.dronecontrol.perceptual.data.events.DetectionData;
@@ -8,19 +22,14 @@ import com.dronecontrol.perceptual.data.events.HandsDetectionData;
 import com.dronecontrol.perceptual.data.events.PictureData;
 import com.dronecontrol.perceptual.listeners.DetectionListener;
 import com.dronecontrol.perceptual.listeners.PictureListener;
+import com.google.common.collect.Maps;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
-import java.util.Map;
-
-public class SwingWindow implements PictureListener, DetectionListener<Hands> {
+public class SwingWindow implements PictureListener, DetectionListener<Hands>, ActionListener {
 
     private static final double OPEN_FACTOR_X = 45.0;
     private static final double OPEN_FACTOR_Y = 35.0;
-
+    private static final String url = "http://parrotsonjava.com";
+    
     public class ImagePanel extends JPanel {
         private static final int CIRCLE_DIAMETER = 20;
 
@@ -30,7 +39,7 @@ public class SwingWindow implements PictureListener, DetectionListener<Hands> {
         public ImagePanel() {
             coordinates = Maps.newLinkedHashMap();
 
-            setSize(640, 480);
+            setSize(640, 545);
 
             Timer time = new Timer(60, new ActionListener() {
                 @Override
@@ -95,9 +104,15 @@ public class SwingWindow implements PictureListener, DetectionListener<Hands> {
         JFrame frame = new JFrame();
         frame.getContentPane().setLayout(new BorderLayout(0, 0));
         panel = new ImagePanel();
-        frame.getContentPane().add(panel);
+        frame.getContentPane().add(panel, BorderLayout.NORTH);
+        
+		JButton jButton = new JButton("Take me to ParrotsOnJava.com");
+        jButton.addActionListener(this);
+        
+        frame.getContentPane().add(panel, BorderLayout.NORTH);
+        frame.getContentPane().add(jButton, BorderLayout.SOUTH);
 
-        frame.setSize(panel.getWidth(), panel.getHeight());
+        frame.setSize(panel.getWidth(), panel.getHeight()+jButton.getSize().height);
         frame.show();
     }
 
@@ -125,4 +140,15 @@ public class SwingWindow implements PictureListener, DetectionListener<Hands> {
 
         panel.setData(image, coordinates);
     }
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (Desktop.isDesktopSupported()) {
+			try {
+				Desktop.getDesktop().browse(new URI(url));
+			} catch (Exception err) {
+				err.printStackTrace();
+			}
+		}
+	}
 }
