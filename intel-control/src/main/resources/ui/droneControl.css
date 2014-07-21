@@ -46,3 +46,11 @@
     -fx-border-width: 10;
     -fx-border-color: red;
 }
+
+#parrotsOnJavaLogo {
+    -fx-background-image: url("../images/parrotsonjava.png");
+    -fx-background-repeat: stretch;
+    -fx-background-position: 100% 100%;
+    -fx-background-size: 35% 35%;
+    -fx-background-color: transparent;
+}

@@ -106,7 +106,7 @@ public class SwingWindow implements PictureListener, DetectionListener<Hands>, A
         panel = new ImagePanel();
         frame.getContentPane().add(panel, BorderLayout.NORTH);
         
-		JButton jButton = new JButton("implemented by ParrotsOnJava.com (Thomas Endres, Martin Förtsch)");
+		JButton jButton = new JButton("implemented by ParrotsOnJava.com (Thomas Endres, Martin FÃ¶rtsch)");
         jButton.addActionListener(this);
         
         frame.getContentPane().add(panel, BorderLayout.NORTH);

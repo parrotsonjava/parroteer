@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+
 <VBox fx:id="vbox" fx:controller="com.dronecontrol.intelcontrol.ui.FxController" xmlns:fx="http://javafx.com/fxml">
     <padding>
         <Insets bottom="10" left="10" right="10" top="10"/>
@@ -36,7 +37,10 @@
         <Slider fx:id="slidePitch" min="-1" max="1" value="0" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
         <Slider fx:id="slideYaw" min="-1" max="1" value="0" GridPane.columnIndex="2" GridPane.rowIndex="4"/>
     </GridPane>
-    <GridPane fx:id="imageContainer" alignment="center" hgap="1" vgap="1" VBox.vgrow="ALWAYS">
+
+    <StackPane fx:id="imageContainer" alignment="center"  VBox.vgrow="ALWAYS">
         <ImageView fx:id="imageView" preserveRatio="true" VBox.vgrow="ALWAYS"/>
-    </GridPane>
+        <GridPane fx:id="parrotsOnJavaLogo" />
+    </StackPane>
+
 </VBox>

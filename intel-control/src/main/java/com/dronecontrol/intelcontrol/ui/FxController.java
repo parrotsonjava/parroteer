@@ -23,7 +23,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 
@@ -47,7 +47,7 @@ public class FxController implements VideoDataListener, NavDataListener,
     private VBox vbox;
 
     @FXML
-    private GridPane imageContainer;
+    private StackPane imageContainer;
 
     @FXML
     private Label labelBattery;
