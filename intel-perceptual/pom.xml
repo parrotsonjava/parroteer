@@ -15,7 +15,7 @@
         <dependency>
             <groupId>com.intel</groupId>
             <artifactId>perceptual-sdk</artifactId>
-            <version>1.0</version>
+            <version>1.0-R8</version>
         </dependency>
 
         <dependency>
