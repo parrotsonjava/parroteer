@@ -39,7 +39,7 @@ public class SwingWindow implements PictureListener, DetectionListener<Hands>, A
         public ImagePanel() {
             coordinates = Maps.newLinkedHashMap();
 
-            setSize(640, 545);
+            setSize(640, 580);
 
             Timer time = new Timer(60, new ActionListener() {
                 @Override
