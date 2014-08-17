@@ -1,20 +1,17 @@
 package com.dronecontrol.droneapi.data.enums;
 
-public enum ControlDataMode
-{
-  IDLE(0),
-  GET_CONFIGURATION_DATA(4),
-  RESET_ACK_FLAG(5);
+public enum ControlDataMode {
+    IDLE(0),
+    GET_CONFIGURATION_DATA(4),
+    RESET_ACK_FLAG(5);
 
-  private final int controlModeCode;
+    private final int controlModeCode;
 
-  ControlDataMode(int controlModeCode)
-  {
-    this.controlModeCode = controlModeCode;
-  }
+    ControlDataMode(int controlModeCode) {
+        this.controlModeCode = controlModeCode;
+    }
 
-  public int getControlModeCode()
-  {
-    return controlModeCode;
-  }
+    public int getControlModeCode() {
+        return controlModeCode;
+    }
 }

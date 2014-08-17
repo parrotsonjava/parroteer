@@ -13,226 +13,191 @@ import com.dronecontrol.droneapi.listeners.NavDataListener;
 import com.dronecontrol.droneapi.listeners.ReadyStateChangeListener;
 import org.apache.log4j.Logger;
 
-import static com.google.common.base.Preconditions.checkState;
 import static com.dronecontrol.droneapi.helpers.ThreadHelper.sleep;
 
-public class DroneStartupCoordinator implements ReadyStateChangeListener, NavDataListener, DroneConfigurationListener
-{
-  private static final int STOP_TIMEOUT = 3000;
+public class DroneStartupCoordinator implements ReadyStateChangeListener, NavDataListener, DroneConfigurationListener {
+    private static final int STOP_TIMEOUT = 3000;
 
-  private final Logger logger = Logger.getLogger(DroneStartupCoordinator.class);
+    private final Logger logger = Logger.getLogger(DroneStartupCoordinator.class);
 
-  private final CommandSenderCoordinator commandSenderCoordinator;
+    private final CommandSenderCoordinator commandSenderCoordinator;
 
-  private final AddressComponent addressComponent;
+    private final AddressComponent addressComponent;
 
-  private final VersionReader versionReader;
+    private final VersionReader versionReader;
 
-  private final CommandSender commandSender;
+    private final CommandSender commandSender;
 
-  private final NavigationDataRetriever navigationDataRetriever;
+    private final NavigationDataRetriever navigationDataRetriever;
 
-  private final VideoRetrieverP264 videoRetrieverP264;
+    private final VideoRetrieverP264 videoRetrieverP264;
 
-  private final VideoRetrieverH264 videoRetrieverH264;
+    private final VideoRetrieverH264 videoRetrieverH264;
 
-  private final ConfigurationDataRetriever configurationDataRetriever;
+    private final ConfigurationDataRetriever configurationDataRetriever;
 
-  private Config config;
+    private Config config;
 
-  private ControllerState currentState;
+    private ControllerState currentState;
 
-  private DroneVersion droneVersion;
+    private DroneVersion droneVersion;
 
-  private DroneConfiguration droneConfiguration;
+    private DroneConfiguration droneConfiguration;
 
-  @Inject
-  public DroneStartupCoordinator(CommandSenderCoordinator commandSenderCoordinator, AddressComponent addressComponent, VersionReader versionReader,
-                                 CommandSender commandSender, NavigationDataRetriever navigationDataRetriever,
-                                 VideoRetrieverP264 videoRetrieverP264, VideoRetrieverH264 videoRetrieverH264,
-                                 ConfigurationDataRetriever configurationDataRetriever)
-  {
-    this.commandSenderCoordinator = commandSenderCoordinator;
-    this.addressComponent = addressComponent;
-    this.versionReader = versionReader;
-    this.commandSender = commandSender;
-    this.navigationDataRetriever = navigationDataRetriever;
-    this.videoRetrieverP264 = videoRetrieverP264;
-    this.videoRetrieverH264 = videoRetrieverH264;
-    this.configurationDataRetriever = configurationDataRetriever;
+    @Inject
+    public DroneStartupCoordinator(CommandSenderCoordinator commandSenderCoordinator, AddressComponent addressComponent, VersionReader versionReader,
+                                   CommandSender commandSender, NavigationDataRetriever navigationDataRetriever,
+                                   VideoRetrieverP264 videoRetrieverP264, VideoRetrieverH264 videoRetrieverH264,
+                                   ConfigurationDataRetriever configurationDataRetriever) {
+        this.commandSenderCoordinator = commandSenderCoordinator;
+        this.addressComponent = addressComponent;
+        this.versionReader = versionReader;
+        this.commandSender = commandSender;
+        this.navigationDataRetriever = navigationDataRetriever;
+        this.videoRetrieverP264 = videoRetrieverP264;
+        this.videoRetrieverH264 = videoRetrieverH264;
+        this.configurationDataRetriever = configurationDataRetriever;
 
-    addListeners(commandSender);
-    currentState = ControllerState.STARTED;
-  }
-
-  private void addListeners(CommandSender commandSender)
-  {
-    commandSender.addReadyStateChangeListener(this);
-    configurationDataRetriever.addReadyStateChangeListener(this);
-    navigationDataRetriever.addReadyStateChangeListener(this);
-    videoRetrieverH264.addReadyStateChangeListener(this);
-    videoRetrieverP264.addReadyStateChangeListener(this);
-
-    navigationDataRetriever.addNavDataListener(this);
-    configurationDataRetriever.addDroneConfigurationListener(this);
-  }
-
-  public void start(Config config)
-  {
-    for (int currentTry = 0; currentTry <= config.getMaxStartupRetries(); currentTry++)
-    {
-      try
-      {
-        startConnecting(config);
-        break;
-      } catch (Exception e)
-      {
-        performStartupErrorActions(config, currentTry, e);
-      }
+        addListeners(commandSender);
+        currentState = ControllerState.STARTED;
     }
-  }
 
-  private void startConnecting(Config config)
-  {
-    this.config = config;
+    private void addListeners(CommandSender commandSender) {
+        commandSender.addReadyStateChangeListener(this);
+        configurationDataRetriever.addReadyStateChangeListener(this);
+        navigationDataRetriever.addReadyStateChangeListener(this);
+        videoRetrieverH264.addReadyStateChangeListener(this);
+        videoRetrieverP264.addReadyStateChangeListener(this);
 
-    checkIfDroneIsReachable();
-    determineDroneVersion();
-
-    startWorkers();
-    waitForState(ControllerState.WORKERS_READY);
-    logger.info("Workers are ready to be used");
-
-    login();
-    logger.info("Logged in successfully");
-
-    startVideoRetriever();
-    waitForState(ControllerState.READY);
-    logger.info("Drone setup complete");
-  }
-
-  private void performStartupErrorActions(Config config, int currentTry, Exception e)
-  {
-    logger.warn("There was an error while connecting: " + e.getMessage());
-    stop();
-
-    if (currentTry == config.getMaxStartupRetries())
-    {
-      throw new IllegalStateException(e);
-    } else
-    {
-      sleep(STOP_TIMEOUT);
+        navigationDataRetriever.addNavDataListener(this);
+        configurationDataRetriever.addDroneConfigurationListener(this);
     }
-  }
 
-  private void checkIfDroneIsReachable()
-  {
-    //checkState(addressComponent.isReachable(config.getDroneIpAddress(), Config.REACHABLE_TIMEOUT), "The drone could not be pinged");
-    logger.info("The drone could be pinged");
-  }
-
-  private void determineDroneVersion()
-  {
-    droneVersion = versionReader.getDroneVersion(config.getDroneIpAddress(), config.getFtpPort());
-  }
-
-  private void startWorkers()
-  {
-    commandSender.start(config.getDroneIpAddress(), config.getCommandPort());
-    configurationDataRetriever.start(config.getDroneIpAddress(), config.getConfigDataPort());
-    navigationDataRetriever.start(config.getDroneIpAddress(), config.getNavDataPort());
-  }
-
-  private void login()
-  {
-    if (droneVersion == DroneVersion.AR_DRONE_1)
-    {
-      commandSenderCoordinator.executeCommand(new InitializeConfigurationCommand(config.getLoginData(), config.getArDrone1VideoCodec()));
-    } else
-    {
-      commandSenderCoordinator.executeCommand(new InitializeConfigurationCommand(config.getLoginData(), config.getArDrone2VideoCodec()));
+    public void start(Config config) {
+        for (int currentTry = 0; currentTry <= config.getMaxStartupRetries(); currentTry++) {
+            try {
+                startConnecting(config);
+                break;
+            } catch (Exception e) {
+                performStartupErrorActions(config, currentTry, e);
+            }
+        }
     }
-  }
 
-  private void startVideoRetriever()
-  {
-    if (droneVersion == DroneVersion.AR_DRONE_1)
-    {
-      videoRetrieverP264.start(config.getDroneIpAddress(), config.getVideoDataPort());
-    } else
-    {
-      videoRetrieverH264.start(config.getDroneIpAddress(), config.getVideoDataPort());
+    private void startConnecting(Config config) {
+        this.config = config;
+
+        checkIfDroneIsReachable();
+        determineDroneVersion();
+
+        startWorkers();
+        waitForState(ControllerState.WORKERS_READY);
+        logger.info("Workers are ready to be used");
+
+        login();
+        logger.info("Logged in successfully");
+
+        startVideoRetriever();
+        waitForState(ControllerState.READY);
+        logger.info("Drone setup complete");
     }
-  }
 
-  private void waitForState(ControllerState state)
-  {
-    while (currentState != state)
-    {
-      sleep(Config.WAIT_TIMEOUT);
+    private void performStartupErrorActions(Config config, int currentTry, Exception e) {
+        logger.warn("There was an error while connecting: " + e.getMessage());
+        stop();
+
+        if (currentTry == config.getMaxStartupRetries()) {
+            throw new IllegalStateException(e);
+        } else {
+            sleep(STOP_TIMEOUT);
+        }
     }
-  }
 
-  public void stop()
-  {
-    currentState = ControllerState.STOPPED;
-
-    configurationDataRetriever.stop();
-    navigationDataRetriever.stop();
-    commandSender.stop();
-    stopVideoRetriever();
-  }
-
-  private void stopVideoRetriever()
-  {
-    if (droneVersion == DroneVersion.AR_DRONE_1)
-    {
-      videoRetrieverP264.stop();
-    } else
-    {
-      videoRetrieverH264.stop();
+    private void checkIfDroneIsReachable() {
+        //checkState(addressComponent.isReachable(config.getDroneIpAddress(), Config.REACHABLE_TIMEOUT), "The drone could not be pinged");
+        logger.info("The drone could be pinged");
     }
-  }
 
-  @Override
-  public void onDroneConfiguration(DroneConfiguration configuration)
-  {
-    droneConfiguration = configuration;
-  }
-
-  @Override
-  public void onNavData(NavData navData)
-  {
-    //noinspection StatementWithEmptyBody
-    if (navData.getState().isCommunicationProblemOccurred())
-    {
-      // TODO if there are problems, reset the command sender sequence number
-      // There is no clear reference in the manual for that
-      // (@see Developer Manual, page 40 ("How do the client and the droneapi synchronize?")
+    private void determineDroneVersion() {
+        droneVersion = versionReader.getDroneVersion(config.getDroneIpAddress(), config.getFtpPort());
     }
-  }
 
-  @Override
-  public void onReadyStateChange(ReadyState readyState)
-  {
-    if (readyState == ReadyStateChangeListener.ReadyState.READY)
-    {
-      currentState = currentState.getNextState();
+    private void startWorkers() {
+        commandSender.start(config.getDroneIpAddress(), config.getCommandPort());
+        configurationDataRetriever.start(config.getDroneIpAddress(), config.getConfigDataPort());
+        navigationDataRetriever.start(config.getDroneIpAddress(), config.getNavDataPort());
     }
-  }
 
-  public ControllerState getState()
-  {
-    return currentState;
-  }
+    private void login() {
+        if (droneVersion == DroneVersion.AR_DRONE_1) {
+            commandSenderCoordinator.executeCommand(new InitializeConfigurationCommand(config.getLoginData(), config.getArDrone1VideoCodec()));
+        } else {
+            commandSenderCoordinator.executeCommand(new InitializeConfigurationCommand(config.getLoginData(), config.getArDrone2VideoCodec()));
+        }
+    }
 
-  public DroneVersion getDroneVersion()
-  {
-    return droneVersion;
-  }
+    private void startVideoRetriever() {
+        if (droneVersion == DroneVersion.AR_DRONE_1) {
+            videoRetrieverP264.start(config.getDroneIpAddress(), config.getVideoDataPort());
+        } else {
+            videoRetrieverH264.start(config.getDroneIpAddress(), config.getVideoDataPort());
+        }
+    }
 
-  public DroneConfiguration getDroneConfiguration()
-  {
-    return droneConfiguration;
-  }
+    private void waitForState(ControllerState state) {
+        while (currentState != state) {
+            sleep(Config.WAIT_TIMEOUT);
+        }
+    }
+
+    public void stop() {
+        currentState = ControllerState.STOPPED;
+
+        configurationDataRetriever.stop();
+        navigationDataRetriever.stop();
+        commandSender.stop();
+        stopVideoRetriever();
+    }
+
+    private void stopVideoRetriever() {
+        if (droneVersion == DroneVersion.AR_DRONE_1) {
+            videoRetrieverP264.stop();
+        } else {
+            videoRetrieverH264.stop();
+        }
+    }
+
+    @Override
+    public void onDroneConfiguration(DroneConfiguration configuration) {
+        droneConfiguration = configuration;
+    }
+
+    @Override
+    public void onNavData(NavData navData) {
+        //noinspection StatementWithEmptyBody
+        if (navData.getState().isCommunicationProblemOccurred()) {
+            // TODO if there are problems, reset the command sender sequence number
+            // There is no clear reference in the manual for that
+            // (@see Developer Manual, page 40 ("How do the client and the droneapi synchronize?")
+        }
+    }
+
+    @Override
+    public void onReadyStateChange(ReadyState readyState) {
+        if (readyState == ReadyStateChangeListener.ReadyState.READY) {
+            currentState = currentState.getNextState();
+        }
+    }
+
+    public ControllerState getState() {
+        return currentState;
+    }
+
+    public DroneVersion getDroneVersion() {
+        return droneVersion;
+    }
+
+    public DroneConfiguration getDroneConfiguration() {
+        return droneConfiguration;
+    }
 }

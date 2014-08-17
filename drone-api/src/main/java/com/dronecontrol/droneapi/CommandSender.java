@@ -1,16 +1,12 @@
 package com.dronecontrol.droneapi;
 
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import com.dronecontrol.droneapi.commands.ATCommand;
 import com.dronecontrol.droneapi.commands.Command;
 import com.dronecontrol.droneapi.commands.simple.WatchDogCommand;
-import com.dronecontrol.droneapi.components.AddressComponent;
-import com.dronecontrol.droneapi.components.ErrorListenerComponent;
-import com.dronecontrol.droneapi.components.ReadyStateListenerComponent;
-import com.dronecontrol.droneapi.components.ThreadComponent;
-import com.dronecontrol.droneapi.components.UdpComponent;
+import com.dronecontrol.droneapi.components.*;
 import com.dronecontrol.droneapi.listeners.ReadyStateChangeListener;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 
 import java.net.DatagramPacket;
@@ -19,195 +15,167 @@ import java.util.List;
 
 import static com.dronecontrol.droneapi.helpers.ThreadHelper.sleep;
 
-public class CommandSender implements Runnable
-{
-  private final Logger logger = Logger.getLogger(CommandSender.class);
+public class CommandSender implements Runnable {
+    private final Logger logger = Logger.getLogger(CommandSender.class);
 
-  private final ThreadComponent threadComponent;
+    private final ThreadComponent threadComponent;
 
-  private final AddressComponent addressComponent;
+    private final AddressComponent addressComponent;
 
-  private final UdpComponent udpComponent;
+    private final UdpComponent udpComponent;
 
-  private final ReadyStateListenerComponent readyStateListenerComponent;
+    private final ReadyStateListenerComponent readyStateListenerComponent;
 
-  private final ErrorListenerComponent errorListenerComponent;
+    private final ErrorListenerComponent errorListenerComponent;
 
-  private final InternalStateWatcher internalStateWatcher;
+    private final InternalStateWatcher internalStateWatcher;
 
-  private ReadyStateChangeListener.ReadyState readyState = ReadyStateChangeListener.ReadyState.NOT_READY;
+    private ReadyStateChangeListener.ReadyState readyState = ReadyStateChangeListener.ReadyState.NOT_READY;
 
-  private List<ATCommand> commandsToSend;
+    private List<ATCommand> commandsToSend;
 
-  private int sequenceNumber = 1;
+    private int sequenceNumber = 1;
 
-  private String droneIpAddress;
+    private String droneIpAddress;
 
-  private int commandPort;
+    private int commandPort;
 
-  @Inject
-  public CommandSender(ThreadComponent threadComponent, AddressComponent addressComponent, UdpComponent udpComponent,
-                       ReadyStateListenerComponent readyStateListenerComponent, ErrorListenerComponent errorListenerComponent,
-                       InternalStateWatcher internalStateWatcher)
-  {
-    this.threadComponent = threadComponent;
-    this.addressComponent = addressComponent;
-    this.udpComponent = udpComponent;
-    this.readyStateListenerComponent = readyStateListenerComponent;
-    this.errorListenerComponent = errorListenerComponent;
-    this.internalStateWatcher = internalStateWatcher;
+    @Inject
+    public CommandSender(ThreadComponent threadComponent, AddressComponent addressComponent, UdpComponent udpComponent,
+                         ReadyStateListenerComponent readyStateListenerComponent, ErrorListenerComponent errorListenerComponent,
+                         InternalStateWatcher internalStateWatcher) {
+        this.threadComponent = threadComponent;
+        this.addressComponent = addressComponent;
+        this.udpComponent = udpComponent;
+        this.readyStateListenerComponent = readyStateListenerComponent;
+        this.errorListenerComponent = errorListenerComponent;
+        this.internalStateWatcher = internalStateWatcher;
 
-    commandsToSend = Lists.newArrayList();
-  }
-
-  public void start(String droneIpAddress, int commandPort)
-  {
-    this.droneIpAddress = droneIpAddress;
-    this.commandPort = commandPort;
-
-    logger.info("Starting command sender thread");
-    threadComponent.start(this);
-  }
-
-  public void stop()
-  {
-    logger.info("Stopping command sender thread");
-    threadComponent.stopAndWait();
-  }
-
-  public void addReadyStateChangeListener(ReadyStateChangeListener readyStateChangeListener)
-  {
-    readyStateListenerComponent.addReadyStateChangeListener(readyStateChangeListener);
-  }
-
-  public void removeReadyStateChangeListener(ReadyStateChangeListener readyStateChangeListener)
-  {
-    readyStateListenerComponent.addReadyStateChangeListener(readyStateChangeListener);
-  }
-
-  public void sendCommand(ATCommand command)
-  {
-    queue(command);
-  }
-
-  private Command queue(ATCommand command)
-  {
-    commandsToSend.add(command);
-    return command;
-  }
-
-  @Override
-  public void run()
-  {
-    try
-    {
-      doRun();
-    } catch (Throwable e)
-    {
-      errorListenerComponent.emitError(e);
-    }
-  }
-
-  private void doRun()
-  {
-    int count = 1;
-    connectToCommandSenderPort();
-
-    while (!threadComponent.isStopped())
-    {
-      count = trySending(count);
-      changeReadyState();
+        commandsToSend = Lists.newArrayList();
     }
 
-    disconnectFromCommandSenderPort();
-  }
+    public void start(String droneIpAddress, int commandPort) {
+        this.droneIpAddress = droneIpAddress;
+        this.commandPort = commandPort;
 
-  private int trySending(int count)
-  {
-    try
-    {
-      count = sendPendingCommands(count);
-    } catch (Throwable e)
-    {
-      logger.warn("Exception while trying to send data: " + e.getMessage());
-    }
-    return count;
-  }
-
-  private void connectToCommandSenderPort()
-  {
-    InetAddress address = addressComponent.getInetAddress(droneIpAddress);
-
-    logger.info(String.format("Connecting to command send port %d", commandPort));
-    udpComponent.connect(address, commandPort);
-  }
-
-  private int sendPendingCommands(int count)
-  {
-    List<ATCommand> commands = getCommands(count);
-    for (ATCommand command : commands)
-    {
-      send(command);
-    }
-    sleep(15);
-    return count + 1;
-  }
-
-  private List<ATCommand> getCommands(int count)
-  {
-    List<ATCommand> commands = commandsToSend;
-    if (count % 10 == 1)
-    {
-      commands.add(new WatchDogCommand());
-    }
-    commands.addAll(internalStateWatcher.getCommandsToUpholdInternalState());
-
-    commandsToSend = Lists.newArrayList();
-    return commands;
-  }
-
-  private void send(ATCommand command)
-  {
-    if (command.isPreparationCommandNeeded())
-    {
-      sendCommandText(command.getPreparationCommandText(getSequenceNumber()));
+        logger.info("Starting command sender thread");
+        threadComponent.start(this);
     }
 
-    sendCommandText(command.getCommandText(getSequenceNumber()));
-  }
+    public void stop() {
+        logger.info("Stopping command sender thread");
+        threadComponent.stopAndWait();
+    }
 
-  private void sendCommandText(String commandText)
-  {
-    byte[] sendData = commandText.getBytes();
-    InetAddress address = addressComponent.getInetAddress(droneIpAddress);
-    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, address, commandPort);
+    public void addReadyStateChangeListener(ReadyStateChangeListener readyStateChangeListener) {
+        readyStateListenerComponent.addReadyStateChangeListener(readyStateChangeListener);
+    }
 
-    // For debugging purposes ... used very often
+    public void removeReadyStateChangeListener(ReadyStateChangeListener readyStateChangeListener) {
+        readyStateListenerComponent.addReadyStateChangeListener(readyStateChangeListener);
+    }
+
+    public void sendCommand(ATCommand command) {
+        queue(command);
+    }
+
+    private Command queue(ATCommand command) {
+        commandsToSend.add(command);
+        return command;
+    }
+
+    @Override
+    public void run() {
+        try {
+            doRun();
+        } catch (Throwable e) {
+            errorListenerComponent.emitError(e);
+        }
+    }
+
+    private void doRun() {
+        int count = 1;
+        connectToCommandSenderPort();
+
+        while (!threadComponent.isStopped()) {
+            count = trySending(count);
+            changeReadyState();
+        }
+
+        disconnectFromCommandSenderPort();
+    }
+
+    private int trySending(int count) {
+        try {
+            count = sendPendingCommands(count);
+        } catch (Throwable e) {
+            logger.warn("Exception while trying to send data: " + e.getMessage());
+        }
+        return count;
+    }
+
+    private void connectToCommandSenderPort() {
+        InetAddress address = addressComponent.getInetAddress(droneIpAddress);
+
+        logger.info(String.format("Connecting to command send port %d", commandPort));
+        udpComponent.connect(address, commandPort);
+    }
+
+    private int sendPendingCommands(int count) {
+        List<ATCommand> commands = getCommands(count);
+        for (ATCommand command : commands) {
+            send(command);
+        }
+        sleep(15);
+        return count + 1;
+    }
+
+    private List<ATCommand> getCommands(int count) {
+        List<ATCommand> commands = commandsToSend;
+        if (count % 10 == 1) {
+            commands.add(new WatchDogCommand());
+        }
+        commands.addAll(internalStateWatcher.getCommandsToUpholdInternalState());
+
+        commandsToSend = Lists.newArrayList();
+        return commands;
+    }
+
+    private void send(ATCommand command) {
+        if (command.isPreparationCommandNeeded()) {
+            sendCommandText(command.getPreparationCommandText(getSequenceNumber()));
+        }
+
+        sendCommandText(command.getCommandText(getSequenceNumber()));
+    }
+
+    private void sendCommandText(String commandText) {
+        byte[] sendData = commandText.getBytes();
+        InetAddress address = addressComponent.getInetAddress(droneIpAddress);
+        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, address, commandPort);
+
+        // For debugging purposes ... used very often
     /*if (!commandText.startsWith("AT*COMWDG"))
     {
       System.out.println(commandText);
     }*/
 
-    udpComponent.send(sendPacket);
-  }
-
-  private int getSequenceNumber()
-  {
-    return sequenceNumber++;
-  }
-
-  private void changeReadyState()
-  {
-    if (readyState != ReadyStateChangeListener.ReadyState.READY)
-    {
-      readyState = ReadyStateChangeListener.ReadyState.READY;
-      readyStateListenerComponent.emitReadyStateChange(ReadyStateChangeListener.ReadyState.READY);
+        udpComponent.send(sendPacket);
     }
-  }
 
-  private void disconnectFromCommandSenderPort()
-  {
-    logger.info(String.format("Disconnecting from command send port %d", commandPort));
-    udpComponent.disconnect();
-  }
+    private int getSequenceNumber() {
+        return sequenceNumber++;
+    }
+
+    private void changeReadyState() {
+        if (readyState != ReadyStateChangeListener.ReadyState.READY) {
+            readyState = ReadyStateChangeListener.ReadyState.READY;
+            readyStateListenerComponent.emitReadyStateChange(ReadyStateChangeListener.ReadyState.READY);
+        }
+    }
+
+    private void disconnectFromCommandSenderPort() {
+        logger.info(String.format("Disconnecting from command send port %d", commandPort));
+        udpComponent.disconnect();
+    }
 }

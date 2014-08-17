@@ -1,6 +1,5 @@
 package com.dronecontrol.intelcontrol.control;
 
-import com.google.inject.Inject;
 import com.dronecontrol.droneapi.DroneController;
 import com.dronecontrol.droneapi.data.NavData;
 import com.dronecontrol.droneapi.data.enums.Camera;
@@ -20,6 +19,7 @@ import com.dronecontrol.perceptual.helpers.CoordinateCalculator;
 import com.dronecontrol.perceptual.helpers.CoordinateListener;
 import com.dronecontrol.perceptual.listeners.DetectionListener;
 import com.dronecontrol.perceptual.listeners.GestureListener;
+import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 
 public class DroneInputController implements ReadyStateChangeListener, NavDataListener, UIActionListener,

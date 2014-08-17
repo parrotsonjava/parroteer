@@ -9,6 +9,8 @@ import com.dronecontrol.droneapi.data.LoginData;
 import com.dronecontrol.droneapi.data.NavData;
 import com.dronecontrol.droneapi.data.enums.ARDrone1VideoCodec;
 import com.dronecontrol.droneapi.data.enums.ARDrone2VideoCodec;
+import com.dronecontrol.droneapi.data.enums.DetectionType;
+import com.dronecontrol.droneapi.data.enums.TagOption;
 import com.dronecontrol.droneapi.helpers.VersionHelper;
 
 import java.util.Collection;
@@ -16,57 +18,57 @@ import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
 
-public class InitializeConfigurationCommand implements ComposedCommand
-{
-  private final LoginData loginData;
+public class InitializeConfigurationCommand implements ComposedCommand {
+    private final LoginData loginData;
 
-  private final String videoCodecCode;
+    private final String videoCodecCode;
 
-  public InitializeConfigurationCommand(LoginData loginData, ARDrone1VideoCodec videoCodec)
-  {
-    this.loginData = loginData;
-    this.videoCodecCode = String.valueOf(videoCodec.getCodecCode());
-  }
+    public InitializeConfigurationCommand(LoginData loginData, ARDrone1VideoCodec videoCodec) {
+        this.loginData = loginData;
+        this.videoCodecCode = String.valueOf(videoCodec.getCodecCode());
+    }
 
-  public InitializeConfigurationCommand(LoginData loginData, ARDrone2VideoCodec videoCodec)
-  {
-    this.loginData = loginData;
-    this.videoCodecCode = String.valueOf(videoCodec.getCodecCode());
-  }
+    public InitializeConfigurationCommand(LoginData loginData, ARDrone2VideoCodec videoCodec) {
+        this.loginData = loginData;
+        this.videoCodecCode = String.valueOf(videoCodec.getCodecCode());
+    }
 
-  @Override
-  public Collection<Command> getCommands()
-  {
-    Command loginCommand = new LoginCommand(loginData);
-    Command enableNavDataCommand = new EnableNavDataCommand(loginData);
-    Command setVideoCodecCommand = new SetConfigValueCommand(loginData, DroneConfiguration.VIDEO_CODEC_KEY, videoCodecCode);
-    Command getDroneConfigurationCommand = new GetConfigurationDataCommand();
+    @Override
+    public Collection<Command> getCommands() {
+        Command loginCommand = new LoginCommand(loginData);
+        Command enableNavDataCommand = new EnableNavDataCommand(loginData);
+        Command setNavDataOptionsCommand = new SetNavDataOptionsCommand(loginData, TagOption.NAV_DATA, TagOption.VISION_DETECT_DATA);
+        Command setVideoCodecCommand = new SetConfigValueCommand(loginData, DroneConfiguration.VIDEO_CODEC_KEY, videoCodecCode);
+        Command setDetectionTypeCommand = new SetDetectionTypeCommand(loginData, DetectionType.CIRCULAR_ROUNDEL);
 
-    return Lists.newArrayList(loginCommand, enableNavDataCommand, setVideoCodecCommand, getDroneConfigurationCommand);
-  }
+        Command getDroneConfigurationCommand = new GetConfigurationDataCommand();
 
-  @Override
-  public int getTimeoutMillis()
-  {
-    return NO_TIMEOUT;
-  }
+        //return Lists.newArrayList(loginCommand, enableNavDataCommand, setVideoCodecCommand, getDroneConfigurationCommand);
 
-  @Override
-  public void checkSuccess(NavData navData, DroneConfiguration droneConfiguration)
-  {
-    String firmwareVersion = droneConfiguration.getConfig().get(DroneConfiguration.FIRMWARE_VERSION_KEY);
-    checkState(VersionHelper.compareVersions(firmwareVersion, Config.MIN_FIRMWARE_VERSION) >= 0, "The firmware version used is too old");
+        return Lists.newArrayList(loginCommand, enableNavDataCommand, setNavDataOptionsCommand, setVideoCodecCommand,
+                setDetectionTypeCommand, getDroneConfigurationCommand);
+    }
 
-    String sessionId = droneConfiguration.getConfig().get(DroneConfiguration.SESSION_ID_KEY);
-    String profileId = droneConfiguration.getConfig().get(DroneConfiguration.PROFILE_ID_KEY);
-    String applicationId = droneConfiguration.getConfig().get(DroneConfiguration.APPLICATION_ID_KEY);
+    @Override
+    public int getTimeoutMillis() {
+        return NO_TIMEOUT;
+    }
 
-    checkState(Objects.equals(loginData.getSessionChecksum(), sessionId),
-            String.format("The session ID was not set to '%s', but was '%s'", loginData.getSessionChecksum(), sessionId));
-    checkState(Objects.equals(loginData.getProfileChecksum(), profileId), "The profile ID was not set");
-    checkState(Objects.equals(loginData.getApplicationChecksum(), applicationId), "The application ID was not set");
+    @Override
+    public void checkSuccess(NavData navData, DroneConfiguration droneConfiguration) {
+        String firmwareVersion = droneConfiguration.getConfig().get(DroneConfiguration.FIRMWARE_VERSION_KEY);
+        checkState(VersionHelper.compareVersions(firmwareVersion, Config.MIN_FIRMWARE_VERSION) >= 0, "The firmware version used is too old");
 
-    String videoCodecCode = droneConfiguration.getConfig().get(DroneConfiguration.VIDEO_CODEC_KEY);
-    checkState(Objects.equals(this.videoCodecCode, videoCodecCode), "The video codec was not set");
-  }
+        String sessionId = droneConfiguration.getConfig().get(DroneConfiguration.SESSION_ID_KEY);
+        String profileId = droneConfiguration.getConfig().get(DroneConfiguration.PROFILE_ID_KEY);
+        String applicationId = droneConfiguration.getConfig().get(DroneConfiguration.APPLICATION_ID_KEY);
+
+        checkState(Objects.equals(loginData.getSessionChecksum(), sessionId),
+                String.format("The session ID was not set to '%s', but was '%s'", loginData.getSessionChecksum(), sessionId));
+        checkState(Objects.equals(loginData.getProfileChecksum(), profileId), "The profile ID was not set");
+        checkState(Objects.equals(loginData.getApplicationChecksum(), applicationId), "The application ID was not set");
+
+        String videoCodecCode = droneConfiguration.getConfig().get(DroneConfiguration.VIDEO_CODEC_KEY);
+        checkState(Objects.equals(this.videoCodecCode, videoCodecCode), "The video codec was not set");
+    }
 }

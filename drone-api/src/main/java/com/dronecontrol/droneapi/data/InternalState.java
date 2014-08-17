@@ -1,112 +1,93 @@
 package com.dronecontrol.droneapi.data;
 
-public class InternalState
-{
-  private boolean takeOffRequested;
+public class InternalState {
+    private boolean takeOffRequested;
 
-  private boolean landRequested;
+    private boolean landRequested;
 
-  private boolean emergencyRequested;
+    private boolean emergencyRequested;
 
-  private boolean flatTrimRequested;
+    private boolean flatTrimRequested;
 
-  private boolean moveRequested;
+    private boolean moveRequested;
 
-  private float requestedRoll;
+    private float requestedRoll;
 
-  private float requestedPitch;
+    private float requestedPitch;
 
-  private float requestedYaw;
+    private float requestedYaw;
 
-  private float requestedGaz;
+    private float requestedGaz;
 
-  public boolean isTakeOffRequested()
-  {
-    return takeOffRequested;
-  }
+    public boolean isTakeOffRequested() {
+        return takeOffRequested;
+    }
 
-  public void setTakeOffRequested(boolean takeOffRequested)
-  {
-    this.takeOffRequested = takeOffRequested;
-  }
+    public void setTakeOffRequested(boolean takeOffRequested) {
+        this.takeOffRequested = takeOffRequested;
+    }
 
-  public boolean isLandRequested()
-  {
-    return landRequested;
-  }
+    public boolean isLandRequested() {
+        return landRequested;
+    }
 
-  public void setLandRequested(boolean landRequested)
-  {
-    this.landRequested = landRequested;
-  }
+    public void setLandRequested(boolean landRequested) {
+        this.landRequested = landRequested;
+    }
 
-  public boolean isEmergencyRequested()
-  {
-    return emergencyRequested;
-  }
+    public boolean isEmergencyRequested() {
+        return emergencyRequested;
+    }
 
-  public void setEmergencyRequested(boolean emergencyRequested)
-  {
-    this.emergencyRequested = emergencyRequested;
-  }
+    public void setEmergencyRequested(boolean emergencyRequested) {
+        this.emergencyRequested = emergencyRequested;
+    }
 
-  public boolean isFlatTrimRequested()
-  {
-    return flatTrimRequested;
-  }
+    public boolean isFlatTrimRequested() {
+        return flatTrimRequested;
+    }
 
-  public void setFlatTrimRequested(boolean flatTrimRequested)
-  {
-    this.flatTrimRequested = flatTrimRequested;
-  }
+    public void setFlatTrimRequested(boolean flatTrimRequested) {
+        this.flatTrimRequested = flatTrimRequested;
+    }
 
-  public boolean isMoveRequested()
-  {
-    return moveRequested;
-  }
+    public boolean isMoveRequested() {
+        return moveRequested;
+    }
 
-  public void setMoveRequested(boolean moveRequested)
-  {
-    this.moveRequested = moveRequested;
-  }
+    public void setMoveRequested(boolean moveRequested) {
+        this.moveRequested = moveRequested;
+    }
 
-  public float getRequestedRoll()
-  {
-    return requestedRoll;
-  }
+    public float getRequestedRoll() {
+        return requestedRoll;
+    }
 
-  public void setRequestedRoll(float requestedRoll)
-  {
-    this.requestedRoll = requestedRoll;
-  }
+    public void setRequestedRoll(float requestedRoll) {
+        this.requestedRoll = requestedRoll;
+    }
 
-  public float getRequestedPitch()
-  {
-    return requestedPitch;
-  }
+    public float getRequestedPitch() {
+        return requestedPitch;
+    }
 
-  public void setRequestedPitch(float requestedPitch)
-  {
-    this.requestedPitch = requestedPitch;
-  }
+    public void setRequestedPitch(float requestedPitch) {
+        this.requestedPitch = requestedPitch;
+    }
 
-  public float getRequestedYaw()
-  {
-    return requestedYaw;
-  }
+    public float getRequestedYaw() {
+        return requestedYaw;
+    }
 
-  public void setRequestedYaw(float requestedYaw)
-  {
-    this.requestedYaw = requestedYaw;
-  }
+    public void setRequestedYaw(float requestedYaw) {
+        this.requestedYaw = requestedYaw;
+    }
 
-  public float getRequestedGaz()
-  {
-    return requestedGaz;
-  }
+    public float getRequestedGaz() {
+        return requestedGaz;
+    }
 
-  public void setRequestedGaz(float requestedGaz)
-  {
-    this.requestedGaz = requestedGaz;
-  }
+    public void setRequestedGaz(float requestedGaz) {
+        this.requestedGaz = requestedGaz;
+    }
 }

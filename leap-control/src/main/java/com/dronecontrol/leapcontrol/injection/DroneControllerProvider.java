@@ -1,12 +1,11 @@
 package com.dronecontrol.leapcontrol.injection;
 
-import com.google.inject.Provider;
 import com.dronecontrol.droneapi.DroneController;
+import com.dronecontrol.droneapi.ParrotDroneController;
+import com.google.inject.Provider;
 
-public class DroneControllerProvider implements Provider<DroneController>
-{
-  public DroneController get()
-  {
-    return DroneController.build();
-  }
+public class DroneControllerProvider implements Provider<DroneController> {
+    public DroneController get() {
+        return ParrotDroneController.build();
+    }
 }

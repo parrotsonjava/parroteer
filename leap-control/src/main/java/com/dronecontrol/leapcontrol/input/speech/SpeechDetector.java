@@ -3,7 +3,7 @@ package com.dronecontrol.leapcontrol.input.speech;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.dronecontrol.droneapi.components.ThreadComponent;
-import com.dronecontrol.droneapi.injection.Context;
+import com.dronecontrol.droneapi.context.ParrotControlContext;
 import com.dronecontrol.leapcontrol.input.speech.data.SpeechData;
 import com.dronecontrol.leapcontrol.input.speech.listeners.SpeechListener;
 import edu.cmu.sphinx.frontend.util.Microphone;
@@ -34,7 +34,7 @@ public class SpeechDetector implements Runnable
 
   public static void main(String[] args)
   {
-    SpeechDetector speechDetector = Context.getBean(SpeechDetector.class);
+    SpeechDetector speechDetector = ParrotControlContext.getBean(SpeechDetector.class);
     speechDetector.start();
   }
 

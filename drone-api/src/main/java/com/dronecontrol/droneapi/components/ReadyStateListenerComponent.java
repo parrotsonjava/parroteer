@@ -5,36 +5,28 @@ import com.dronecontrol.droneapi.listeners.ReadyStateChangeListener;
 
 import java.util.Set;
 
-public class ReadyStateListenerComponent
-{
-  private final Set<ReadyStateChangeListener> readyStateChangeListeners;
+public class ReadyStateListenerComponent {
+    private final Set<ReadyStateChangeListener> readyStateChangeListeners;
 
-  public ReadyStateListenerComponent()
-  {
-    readyStateChangeListeners = Sets.newHashSet();
-  }
-
-  public void addReadyStateChangeListener(ReadyStateChangeListener readyStateChangeListener)
-  {
-    if (!readyStateChangeListeners.contains(readyStateChangeListener))
-    {
-      readyStateChangeListeners.add(readyStateChangeListener);
+    public ReadyStateListenerComponent() {
+        readyStateChangeListeners = Sets.newHashSet();
     }
-  }
 
-  public void removeReadyStateChangeListener(ReadyStateChangeListener readyStateChangeListener)
-  {
-    if (readyStateChangeListeners.contains(readyStateChangeListener))
-    {
-      readyStateChangeListeners.remove(readyStateChangeListener);
+    public void addReadyStateChangeListener(ReadyStateChangeListener readyStateChangeListener) {
+        if (!readyStateChangeListeners.contains(readyStateChangeListener)) {
+            readyStateChangeListeners.add(readyStateChangeListener);
+        }
     }
-  }
 
-  public void emitReadyStateChange(ReadyStateChangeListener.ReadyState readyState)
-  {
-    for (ReadyStateChangeListener listener : readyStateChangeListeners)
-    {
-      listener.onReadyStateChange(readyState);
+    public void removeReadyStateChangeListener(ReadyStateChangeListener readyStateChangeListener) {
+        if (readyStateChangeListeners.contains(readyStateChangeListener)) {
+            readyStateChangeListeners.remove(readyStateChangeListener);
+        }
     }
-  }
+
+    public void emitReadyStateChange(ReadyStateChangeListener.ReadyState readyState) {
+        for (ReadyStateChangeListener listener : readyStateChangeListeners) {
+            listener.onReadyStateChange(readyState);
+        }
+    }
 }

@@ -31,17 +31,14 @@ package com.dronecontrol.droneapi.video;
 // may be used to endorse or promote products derived from this software without
 // specific prior written permission.
 
-class ImageSlice
-{
-  MacroBlock[] MacroBlocks;
+class ImageSlice {
+    MacroBlock[] MacroBlocks;
 
-  ImageSlice(int macroBlockCount)
-  {
-    MacroBlocks = new MacroBlock[macroBlockCount];
+    ImageSlice(int macroBlockCount) {
+        MacroBlocks = new MacroBlock[macroBlockCount];
 
-    for (int index = 0; index < macroBlockCount; index++)
-    {
-      MacroBlocks[index] = new MacroBlock();
+        for (int index = 0; index < macroBlockCount; index++) {
+            MacroBlocks[index] = new MacroBlock();
+        }
     }
-  }
 }

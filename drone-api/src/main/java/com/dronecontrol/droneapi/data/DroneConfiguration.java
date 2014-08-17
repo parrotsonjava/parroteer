@@ -16,6 +16,10 @@ public class DroneConfiguration
 
   public static final String ENABLE_NAV_DATA_KEY = "general:navdata_demo";
 
+  public static final String NAVDATA_OPTIONS_KEY = "general:navdata_options";
+
+  public static final String DETECTION_TYPE_KEY = "detect:detect_type";
+
   public static final String VIDEO_CODEC_KEY = "video:video_codec";
 
   public static final String VIDEO_CHANNEL_KEY = "video:video_channel";
