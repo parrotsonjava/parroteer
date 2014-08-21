@@ -15,6 +15,7 @@
         <module>intel-control</module>
         <module>intel-perceptual</module>
         <module>socket-control</module>
+        <module>minimal-control</module>
     </modules>
 
     <properties>
