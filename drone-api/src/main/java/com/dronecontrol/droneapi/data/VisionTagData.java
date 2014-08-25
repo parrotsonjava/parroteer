@@ -6,13 +6,15 @@ public class VisionTagData {
     private final int y;
     private final int width;
     private final int height;
+    private final int distance;
     private final float orientationAngle;
 
-    public VisionTagData(int x, int y, int width, int height, float orientationAngle) {
+    public VisionTagData(int x, int y, int width, int height, int distance, float orientationAngle) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.distance = distance;
         this.orientationAngle = orientationAngle;
     }
 
@@ -30,6 +32,10 @@ public class VisionTagData {
 
     public int getHeight() {
         return height;
+    }
+
+    public int getDistance() {
+        return distance;
     }
 
     public float getOrientationAngle() {

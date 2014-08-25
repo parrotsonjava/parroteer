@@ -1,15 +1,15 @@
 package com.dronecontrol.droneapi.navdata;
 
-import com.google.common.collect.ImmutableList;
 import com.dronecontrol.droneapi.data.NavData;
 import com.dronecontrol.droneapi.data.NavDataState;
 import com.dronecontrol.droneapi.data.VisionData;
 import com.dronecontrol.droneapi.data.VisionTagData;
 import com.dronecontrol.droneapi.data.enums.ControlAlgorithm;
 import com.dronecontrol.droneapi.data.enums.TagOption;
+import com.google.common.collect.ImmutableList;
 
-import static com.google.common.base.Preconditions.checkState;
 import static com.dronecontrol.droneapi.helpers.BinaryDataHelper.*;
+import static com.google.common.base.Preconditions.checkState;
 
 public class NavigationDataDecoder {
     private final static int CORRECT_HEADER = 0x55667788;
@@ -124,11 +124,13 @@ public class NavigationDataDecoder {
         int[] yValues = getIntArray(buffer, currentOffset + 36, 4, MAX_NUMBER_OF_TAGS);
         int[] widthValues = getIntArray(buffer, currentOffset + 52, 4, MAX_NUMBER_OF_TAGS);
         int[] heightValues = getIntArray(buffer, currentOffset + 68, 4, MAX_NUMBER_OF_TAGS);
+        int[] distanceValues = getIntArray(buffer, currentOffset + 84, 4, MAX_NUMBER_OF_TAGS);
         float[] orientationValues = getFloatArray(buffer, currentOffset + 82, 4, MAX_NUMBER_OF_TAGS);
 
         ImmutableList.Builder<VisionTagData> tagDataBuilder = new ImmutableList.Builder<>();
         for (int i = 0; i < numberOfDetectedTags; i++) {
-            tagDataBuilder.add(new VisionTagData(xValues[i], yValues[i], widthValues[i], heightValues[i], orientationValues[i]));
+            tagDataBuilder.add(
+                    new VisionTagData(xValues[i], yValues[i], widthValues[i], heightValues[i], distanceValues[i], orientationValues[i]));
         }
         VisionData visionData = new VisionData(tagDataBuilder.build());
         currentNavData.setVisionData(visionData);
